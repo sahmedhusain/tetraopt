@@ -105,7 +105,7 @@ The application uses a backtracking algorithm combined with rotation optimizatio
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/sayehusain/tetris-optimizer.git
+   git clone https://learn.reboot01.com/git/sayehusain/tetris-optimizer
    ```
 
 2. Navigate to the project directory:
