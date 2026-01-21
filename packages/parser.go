@@ -88,3 +88,54 @@ func parseTetromino(lines []string, id int) (*Tetromino, error) {
 		Letter: letter,
 	}, nil
 }
+
+func IsConnected(blocks []Point) bool {
+    visited := make(map[Point]bool)
+    
+    var dfs func(Point)
+    dfs = func(p Point) {
+        if visited[p] {
+            return
+        }
+        visited[p] = true
+        
+        neighbors := []Point{
+            {p.Row - 1, p.Col}, 
+            {p.Row + 1, p.Col}, 
+            {p.Row, p.Col - 1}, 
+            {p.Row, p.Col + 1}, 
+        }
+        
+        for _, neighbor := range neighbors {
+            for _, block := range blocks {
+                if block == neighbor {
+                    dfs(neighbor)
+                }
+            }
+        }
+    }
+    
+    dfs(blocks[0])
+    return len(visited) == 4
+}
+
+func Normalize(blocks []Point) []Point {
+
+	minRow := blocks[0].Row
+	minCol := blocks[0].Col
+
+	for _, block := range blocks {
+		if block.Row < minRow {
+			minRow = block.Row
+		}
+		if block.Col < minCol {
+			minCol = block.Col
+		}
+	}
+
+	for i, block := range blocks {
+		blocks[i] = Point{Row: block.Row - minRow, Col: block.Col - minCol}
+	}
+
+	return blocks
+}
