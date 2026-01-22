@@ -11,7 +11,7 @@ func CalculateMinSize(numPieces int) int {
 	return size
 }
 
-func SolveOptimal(tetrominoes []Tetromino) *Board {
+func Solve(tetrominoes []Tetromino) *Board {
 	if len(tetrominoes) == 0 {
 		return nil
 	}
@@ -19,14 +19,14 @@ func SolveOptimal(tetrominoes []Tetromino) *Board {
 	maxSize := minSize * 2
 	for size := minSize; size <= maxSize; size++ {
 		board := NewBoard(size)
-		if Solve(board, tetrominoes, 0) {
+		if solveRecursive(board, tetrominoes, 0) {
 			return board
 		}
 	}
 	return nil
 }
 
-func Solve(board *Board, tetrominoes []Tetromino, index int) bool {
+func solveRecursive(board *Board, tetrominoes []Tetromino, index int) bool {
 	if index == len(tetrominoes) {
 		return true
 	}
@@ -37,7 +37,7 @@ func Solve(board *Board, tetrominoes []Tetromino, index int) bool {
 				if CanPlace(rotation, i, j, board) {
 					Place(rotation, i, j, board)
 
-					if Solve(board, tetrominoes, index+1) {
+					if solveRecursive(board, tetrominoes, index+1) {
 						return true
 					}
 					Remove(rotation, i, j, board)

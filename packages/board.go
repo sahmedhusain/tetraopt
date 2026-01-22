@@ -12,7 +12,7 @@ func NewBoard(size int) *Board {
 	for i := range Slice {
 		Slice[i] = make([]rune, size)
 		for j := range Slice[i] {
-			Slice[i][j] = ' '
+			Slice[i][j] = '.'
 		}
 	}
 	return &Board{
@@ -29,7 +29,7 @@ func CanPlace(t Tetromino, row, col int, b *Board) bool {
 		if newRow < 0 || newRow >= b.Size || newCol < 0 || newCol >= b.Size {
 			return false
 		}
-		if b.Grid[newRow][newCol] != ' ' {
+		if b.Grid[newRow][newCol] != '.' {
 			return false
 		}
 	}
@@ -50,7 +50,7 @@ func Remove(t Tetromino, row, col int, b *Board) *Board {
 	for _, block := range t.Blocks {
 		newRow := block.Row + row
 		newCol := block.Col + col
-		b.Grid[newRow][newCol] = ' '
+		b.Grid[newRow][newCol] = '.'
 	}
 	return b
 }

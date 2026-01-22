@@ -18,7 +18,7 @@ type Tetromino struct {
 	Letter rune
 }
 
-func Parsefile(filepath string) ([]Tetromino, error) {
+func ParseFile(filepath string) ([]Tetromino, error) {
 	file, err := os.Open(filepath)
 	if err != nil {
 		log.Fatal(err)
@@ -38,20 +38,27 @@ func Parsefile(filepath string) ([]Tetromino, error) {
 	}
 
 	var tetrominoes []Tetromino
-	var currentTetromino []string
 	id := 0
-	for _, line := range lines {
-		if line != "" {
-			currentTetromino = append(currentTetromino, line)
+
+	for i := 0; i < len(lines); {
+		if i+4 > len(lines) {
+			return nil, fmt.Errorf("ERROR: incomplete tetromino at line %d", i+1)
 		}
-		if len(currentTetromino) == 4 {
-			tetromino, err := parseTetromino(currentTetromino, id)
-			if err != nil {
-				log.Fatal(err)
+
+		blockLines := lines[i : i+4]
+		tetromino, err := parseTetromino(blockLines, id)
+		if err != nil {
+			return nil, err
+		}
+		tetrominoes = append(tetrominoes, *tetromino)
+		id++
+		i += 4
+
+		if i < len(lines) {
+			if lines[i] != "" {
+				return nil, fmt.Errorf("ERROR: expected empty line separator at line %d", i+1)
 			}
-			tetrominoes = append(tetrominoes, *tetromino)
-			id++
-			currentTetromino = nil
+			i++
 		}
 	}
 
@@ -81,6 +88,12 @@ func parseTetromino(lines []string, id int) (*Tetromino, error) {
 	if len(blocks) != 4 {
 		return nil, fmt.Errorf("ERROR: Tetromino must have exactly 4 blocks, got %d", len(blocks))
 	}
+	if !IsConnected(blocks) {
+		return nil, fmt.Errorf("ERROR: Tetromino blocks are not connected")
+	}
+
+	blocks = Normalize(blocks)
+
 	letter := rune('A' + id)
 	return &Tetromino{
 		ID:     id,
@@ -90,33 +103,33 @@ func parseTetromino(lines []string, id int) (*Tetromino, error) {
 }
 
 func IsConnected(blocks []Point) bool {
-    visited := make(map[Point]bool)
-    
-    var dfs func(Point)
-    dfs = func(p Point) {
-        if visited[p] {
-            return
-        }
-        visited[p] = true
-        
-        neighbors := []Point{
-            {p.Row - 1, p.Col}, 
-            {p.Row + 1, p.Col}, 
-            {p.Row, p.Col - 1}, 
-            {p.Row, p.Col + 1}, 
-        }
-        
-        for _, neighbor := range neighbors {
-            for _, block := range blocks {
-                if block == neighbor {
-                    dfs(neighbor)
-                }
-            }
-        }
-    }
-    
-    dfs(blocks[0])
-    return len(visited) == 4
+	visited := make(map[Point]bool)
+
+	var dfs func(Point)
+	dfs = func(p Point) {
+		if visited[p] {
+			return
+		}
+		visited[p] = true
+
+		neighbors := []Point{
+			{p.Row - 1, p.Col},
+			{p.Row + 1, p.Col},
+			{p.Row, p.Col - 1},
+			{p.Row, p.Col + 1},
+		}
+
+		for _, neighbor := range neighbors {
+			for _, block := range blocks {
+				if block == neighbor {
+					dfs(neighbor)
+				}
+			}
+		}
+	}
+
+	dfs(blocks[0])
+	return len(visited) == 4
 }
 
 func Normalize(blocks []Point) []Point {
