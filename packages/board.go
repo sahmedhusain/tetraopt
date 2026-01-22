@@ -11,6 +11,9 @@ func NewBoard(size int) *Board {
 	Slice := make([][]rune, size)
 	for i := range Slice {
 		Slice[i] = make([]rune, size)
+		for j := range Slice[i] {
+			Slice[i][j] = ' '
+		}
 	}
 	return &Board{
 		Size: size,
@@ -52,7 +55,7 @@ func Remove(t Tetromino, row, col int, b *Board) *Board {
 	return b
 }
 
-func String(b *Board) string {
+func (b *Board) String() string {
 	var sb strings.Builder
 	for _, row := range b.Grid {
 		for _, cell := range row {
