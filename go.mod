@@ -1,3 +1,3 @@
-module tetris-opt
+module tetraopt
 
 go 1.25.0

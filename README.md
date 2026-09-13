@@ -1,243 +1,116 @@
-# Tetris Optimizer 🧩
+# 🧩 TetraOpt
 
-[![Go](https://img.shields.io/badge/Go-1.20+-00ADD8?style=flat&logo=go)](https://golang.org/)
+[![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?style=flat&logo=go)](https://go.dev)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.md)
 
----
-
-<p align="center">
-  🧩 <strong>Tetris Optimizer</strong><br/>
-  <em>Optimal tetromino arrangement powered by Go</em>
-</p>
-
-<p align="center">
-  Backtracking algorithm • File parsing • Smallest square optimization
-</p>
+**TetraOpt** is a high-performance shape packing and backtracking optimization engine written in Go. It ingests arbitrary sets of polyomino / tetromino pieces from formatted text descriptors, validates shape connectivity, generates rotational symmetry variations, and packs them into the smallest possible 2D grid square.
 
 ---
 
-<p align="center">
-  <strong>Arrange tetrominoes into the smallest possible square.</strong><br/>
-  <em>Smart. Optimized. Efficient.</em>
-</p>
+## ⚡ Key Highlights
 
-<!-- 🔗 Quick Navigation -->
-<p align="center">
-  <a href="#-features">Features</a> •
-  <a href="#-logic--flow">Logic & Flow</a> •
-  <a href="#-technologies-used">Tech Stack</a> •
-  <a href="#-getting-started">Getting Started</a> •
-  <a href="#-how-to-use">Usage</a>
-</p>
+- **File Parser & Connectivity Validator**: Reads 4x4 ASCII grid blocks (`#` and `.`) and validates shape integrity using Depth-First Search (DFS) graph connectivity.
+- **Rotational Symmetry Engine**: Generates unique piece rotations while filtering out redundant spatial variations to minimize search space overhead.
+- **Recursive Backtracking Solver**: Fits pieces onto an optimal 2D grid matrix, recursively testing coordinates and backtracking when invalid states are hit.
+- **Theoretical Minimum Bound Calculator**: Begins board searching at the theoretical lower bound (\(\lceil\sqrt{n \times 4}\rceil\)) and expands size incrementally until a valid square fit is found.
+- **Robust Error Protection**: Validates input formatting, line counts, and piece count bounds, returning clean error codes for malformed inputs.
 
 ---
 
-## Overview
+## 📋 Table of Contents
 
-**Tetris Optimizer** is a command-line program written in **Go** that reads tetromino pieces from a text file and arranges them into the smallest possible square using a backtracking algorithm.
-
-Designed as an algorithmic optimization project, Tetris Optimizer demonstrates core concepts such as file parsing, shape rotation, recursive backtracking, and spatial optimization.
-
----
-
-## ✨ Features
-
-Tetris Optimizer includes the following core features:
-
-- **File Parsing** 📄  
-  Reads and validates tetromino pieces from text files. It checks for correct format, 4-line blocks, and valid character usage.
-
-- **Shape Validation** ✅  
-  Ensures all pieces are valid tetrominoes:
-  - Exactly 4 blocks (`#`).
-  - All blocks are connected (validated via DFS/BFS).
-  - Proper 4x4 grid spacing.
-
-- **Rotation Logic** 🔄  
-  Automatically generates all unique rotations of each piece to maximize fitting potential. It handles symmetry detection to avoid redundant checks.
-
-- **Backtracking Algorithm** 🎯  
-  Intelligently places pieces using recursive backtracking. If a piece doesn't fit, it backtracks to the previous piece and tries a new position or rotation.
-
-- **Size Optimization** 📐  
-  Finds the **smallest possible square** that fits all pieces. It starts from the theoretical minimum size (`ceil(sqrt(n*4))`) and expands incrementally until a solution is found.
-
-- **Error Handling** ⚠️  
-  Prints "ERROR" for invalid input files or malformed tetrominoes, ensuring robust execution.
+- [Key Highlights](#-key-highlights)
+- [System Architecture](#-system-architecture)
+- [Backtracking Solver Algorithm](#-backtracking-solver-algorithm)
+- [Setup & Execution](#-setup--execution)
+- [Project Directory Structure](#-project-directory-structure)
+- [License](#-license)
 
 ---
 
-## 🧠 Logic & Flow
-
-The application follows a structured pipeline from parsing to solving. Below are visual representations of the system's logic.
-
-### 1. High-Level Execution Flow
-
-This flowchart illustrates the lifecycle of the program from command-line argument to final output.
+## 🏗️ System Architecture
 
 ```mermaid
 graph TD
-    A([Start]) --> B{Check Args}
-    B -- Invalid --> C[Print Usage Error] --> Z([End])
-    B -- Valid --> D[Parse File]
-
-    D --> E{Valid Format?}
-    E -- No --> F[Print "ERROR"] --> Z
-    E -- Yes --> G[Generate Rotations for All Pieces]
-
-    G --> H[Calculate Min Board Size]
-    H --> I[Attempt to Solve (Backtracking)]
-
-    I --> J{Solution Found?}
-    J -- Yes --> K[Print Board] --> Z
-    J -- No --> L[Increase Board Size] --> I
+    A[Input Text Descriptor File] --> B[Parser Engine - packages/parser.go]
+    B --> C{Valid Shape & Format?}
+    
+    C -- No --> D[Output: ERROR]
+    C -- Yes --> E[Tetromino Struct Generation & Rotations - packages/tetromino.go]
+    
+    E --> F[Calculate Minimum Theoretical Board Size]
+    F --> G[Backtracking Solver Engine - packages/solver.go]
+    
+    G --> H[2D Grid Placement Engine - packages/board.go]
+    H --> I{Solution Found for Current Size?}
+    
+    I -- No --> J[Increment Board Size +1] --> G
+    I -- Yes --> K[Render Alphabetically Formatted Grid to STDOUT]
 ```
 
-### 2. Backtracking Algorithm (The Core)
+---
 
-The core logical engine uses recursive backtracking to fit pieces. This state diagram shows how the solver decides where to place pieces.
+## 📐 Backtracking Solver Algorithm
 
 ```mermaid
 stateDiagram-v2
-    [*] --> SelectPiece
+    [*] --> CalculateMinSize: Start Search Loop
 
-    state "Recursion Loop" as Loop {
-        SelectPiece --> TryPosition
-        TryPosition --> CheckFit: Can Place?
-
-        CheckFit --> PlacePiece: Yes
-        PlacePiece --> NextPiece: Recurse (Next ID)
-
-        CheckFit --> TryNextRotation: No
-        TryNextRotation --> TryPosition: Has Rotations
+    state "Recursive Backtracking Loop" as SolverLoop {
+        CalculateMinSize --> SelectPiece: Next Piece ID
+        SelectPiece --> TryPosition: Scan Grid (X, Y)
+        TryPosition --> ValidateFit: Check Collision & Bounds
+        
+        ValidateFit --> PlacePiece: Valid Fit
+        PlacePiece --> RecurseNext: Recurse (Index + 1)
+        
+        ValidateFit --> TryNextRotation: Overlap / Out of Bounds
+        TryNextRotation --> TryPosition: Has Remaining Rotations
         TryNextRotation --> Backtrack: No Rotations Left
-
-        NextPiece --> Solved: All Placed
-        NextPiece --> Backtrack: Failed Deep
-
-        Backtrack --> RemovePiece: Undo Move
-        RemovePiece --> TryPosition: Try Next Pos
+        
+        RecurseNext --> SolvedState: All Pieces Placed
+        RecurseNext --> Backtrack: Unresolvable State
+        
+        Backtrack --> UndoMove: Remove Piece & Reset Grid
+        UndoMove --> TryPosition: Try Next Position
     }
 
-    Solved --> [*]: Return Board
-```
-
-### 3. Application Structure
-
-The code is organized into modular packages to separate concerns.
-
-```mermaid
-classDiagram
-    direction TB
-    class Main {
-        +main()
-        +Orchestrate Flow
-    }
-
-    class Parser {
-        +ParseFile(path)
-        +ValidateShape()
-        +Normalize()
-        +CheckConnectivity()
-    }
-
-    class Solver {
-        +Solve(pieces)
-        +solveRecursive(board, index)
-    }
-
-    class Board {
-        +Size
-        +Grid
-        +NewBoard(size)
-        +Place(piece)
-        +Remove(piece)
-        +String()
-    }
-
-    class Tetromino {
-        +ID
-        +Letter
-        +Blocks []Point
-        +Rotations
-    }
-
-    Main --> Parser : Reads Input
-    Main --> Solver : Requests Solution
-    Solver --> Board : Manipulates
-    Solver --> Tetromino : Arranges
-    Parser --> Tetromino : Creates
+    SolvedState --> [*]: Print Output Board
 ```
 
 ---
 
-## 🛠️ Technologies Used
-
-- **Go 1.20+** 🐹 – Core language and standard libraries
-- **File I/O** 📁 – Reading and parsing tetromino files
-- **Algorithms** 🧮 – Backtracking and recursive optimization
-- **Data Structures** 📊 – 2D grids and coordinate systems
-
----
-
-## 🚀 Getting Started
+## 🚀 Setup & Execution
 
 ### Prerequisites
 
-- Go version **1.20 or newer**
-- A terminal to run the program
+- **Go**: Version 1.20 or newer installed.
 
-### Installation & Setup
+---
 
-1. **Clone the repository:**
+### Build & Run
 
+1. **Clone Repository**:
    ```bash
-   git clone https://learn.reboot01.com/git/sayehusain/tetris-optimizer
+   git clone https://github.com/sahmedhusain/tetraopt.git
+   cd tetraopt
    ```
 
-2. **Navigate to the project directory:**
-
+2. **Compile Application**:
    ```bash
-   cd tetris-optimizer
+   go build -o tetraopt .
    ```
 
-3. **Install dependencies (if any):**
-
+3. **Run Optimization Solver**:
    ```bash
-   go mod tidy
-   ```
-
-   _(Note: This project strictly uses the standard library, so no external modules are fetched)_
-
-4. **Build the program:**
-   ```bash
-   go build -o tetris-optimizer
+   ./tetraopt testdata/sample.txt
    ```
 
 ---
 
-## 📖 How to Use
+### Input & Output Example
 
-Run the program by passing a text file containing tetromino definitions as an argument.
-
-### Basic Usage
-
-```bash
-go run . testdata/sample.txt
-```
-
-Or using the compiled binary:
-
-```bash
-./tetris-optimizer testdata/sample.txt
-```
-
-### Input File Format
-
-Each tetromino must be represented as a **4x4 grid** using `#` for blocks and `.` for empty spaces. Consecutive pieces must be separated by **one empty line**.
-
-**Example Input (`sample.txt`):**
-
+#### Input (`testdata/sample.txt`):
 ```text
 ...#
 ...#
@@ -255,12 +128,9 @@ Each tetromino must be represented as a **4x4 grid** using `#` for blocks and `.
 ....
 ```
 
-### Output Example
-
-The program prints the smallest square board with pieces identified by letters (A, B, C...) corresponding to their order in the input file.
-
+#### Output:
 ```bash
-$ ./tetris-optimizer testdata/sample.txt
+$ ./tetraopt testdata/sample.txt
 ABBBB.
 ACCCEE
 AFFCEE
@@ -271,40 +141,25 @@ HHHDDG
 
 ---
 
-## 🏗️ Project Structure
+## 📂 Project Directory Structure
 
 ```
-tetris-optimizer/
-├── main.go              # Entry point: handles CLI args & orchestration
-├── packages/            # Modular logic packages
-│   ├── parser.go        # Reads file, validates shapes, creates structs
-│   ├── tetromino.go     # Tetromino definitions & rotation utilities
-│   ├── board.go         # 2D Grid implementation & print methods
-│   └── solver.go        # Recursive backtracking algorithm
-├── tests/               # Unit tests
-└── testdata/            # Sample input files for testing
+tetraopt/
+├── main.go              # CLI bootstrapper & argument parser
+├── go.mod               # Go module manifest (module tetraopt)
+├── README.md            # Documentation
+├── test.sh              # Verification test script
+├── packages/            # Core optimization packages
+│   ├── parser.go        # Text file lexer, format validator, & DFS connectivity checker
+│   ├── tetromino.go     # Tetromino struct definitions & rotational variations
+│   ├── board.go         # 2D Grid allocation, placement, and ASCII renderer
+│   └── solver.go        # Recursive backtracking solver algorithm
+├── tests/               # Unit test files
+└── testdata/            # Sample input test files
 ```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome!
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License**. See [LICENSE.md](LICENSE.md) for details.
-
----
-
-## 👥 Authors
-
-- **Sayed Ahmed Husain** – [sayedahmed97.sad@gmail.com](mailto:sayedahmed97.sad@gmail.com)
+Distributed under the MIT License. See [LICENSE](LICENSE.md) for details.

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"tetris-opt/packages"
+	"tetraopt/packages"
 )
 
 func main() {
