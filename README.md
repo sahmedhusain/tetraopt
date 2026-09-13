@@ -44,8 +44,41 @@ graph TD
     G --> H[2D Grid Placement Engine - packages/board.go]
     H --> I{Solution Found for Current Size?}
     
-    I -- No --> J[Increment Board Size +1] --> G
+    I -- No --> J[Increment Board Size +1]
+    J --> G
     I -- Yes --> K[Render Alphabetically Formatted Grid to STDOUT]
+```
+
+---
+
+## 🖥️ Live Terminal Execution Preview
+
+Below is a live terminal trace running TetraOpt on a multi-tetromino input file to pack shapes into the smallest possible 2D grid square:
+
+```text
+$ cat testdata/sample.txt
+...#
+...#
+...#
+...#
+
+....
+....
+....
+####
+
+.###
+...#
+....
+....
+
+$ ./tetraopt testdata/sample.txt
+ABBBB.
+ACCCEE
+AFFCEE
+A.FFGG
+HHHDDG
+.HDD.G
 ```
 
 ---
